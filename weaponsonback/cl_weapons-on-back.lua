@@ -15,7 +15,9 @@ local SETTINGS = {
 	--      ["prop_ld_jerrycan_01"] = 883325847,
     -- assault rifles:
     ["w_ar_carbinerifle"] = -2084633992,
+	["w_me_poolcue"] = GetHashKey("WEAPON_POOLCUE"),
     ["w_ar_carbineriflemk2"] = GetHashKey("WEAPON_CARBINERIFLE_Mk2"),
+	["w_mg_flamethower"] = -1741077443,
     ["w_ar_assaultrifle"] = -1074790547,
     ["w_ar_specialcarbine"] = -1063057011,
     ["w_ar_bullpuprifle"] = 2132975508,
@@ -40,40 +42,42 @@ local SETTINGS = {
     ["w_lr_firework"] = 2138347493
     }
 }
-DisableControlAction(0, 20, true)
 
 local attached_weapons = {}
 local iattached = false
-Citizen.CreateThread(function()
-	while true do
 
-local me = GetPlayerPed(-1)
+local wep_back = "Z"
+RegisterKeyMapping( "wepback", "Sling Weapon", "keyboard", wep_back )	
 
+
+
+RegisterCommand( "wepback", function()
+
+	local me = GetPlayerPed(-1)
 	
-		Wait(1)
+	if iattached then
+		SetCurrentPedWeapon(me, isweapon, true)
 		
-		if (IsDisabledControlJustReleased(0 , 20)) then
-			if iattached then
+		for name, attached_object in pairs(attached_weapons) do
+			DetachEntity(attached_object.handle)
+			DeleteObject(attached_object.handle)
+		end
+	
+		iattached = false
 					
-					SetCurrentPedWeapon(me, isweapon, true)
-					for name, attached_object in pairs(attached_weapons) do
-					DetachEntity(attached_object.handle)
-					DeleteObject(attached_object.handle)
-					end
-					iattached = false
-					
-			else
+		else
+			
 			isweapon = GetSelectedPedWeapon(me)
-				for wep_name, wep_hash in pairs(SETTINGS.compatable_weapon_hashes) do
-					if wep_hash == GetSelectedPedWeapon(GetPlayerPed(-1)) then
-						AttachWeapon(wep_name, wep_hash, SETTINGS.back_bone, SETTINGS.x, SETTINGS.y, SETTINGS.z, SETTINGS.x_rotation, SETTINGS.y_rotation, SETTINGS.z_rotation, isMeleeWeapon(wep_name))
-						SetCurrentPedWeapon(me, GetHashKey("WEAPON_UNARMED"), true)
-						iattached = true
-					end
+		
+			for wep_name, wep_hash in pairs(SETTINGS.compatable_weapon_hashes) do
+		
+				if wep_hash == GetSelectedPedWeapon(GetPlayerPed(-1)) then
+					AttachWeapon(wep_name, wep_hash, SETTINGS.back_bone, SETTINGS.x, SETTINGS.y, SETTINGS.z, SETTINGS.x_rotation, SETTINGS.y_rotation, SETTINGS.z_rotation, isMeleeWeapon(wep_name))
+					SetCurrentPedWeapon(me, GetHashKey("WEAPON_UNARMED"), true)
+					iattached = true
 				end
 			end
-		end 
-	end
+		end
 end)
 
 function AttachWeapon(attachModel,modelHash,boneNumber,x,y,z,xR,yR,zR, isMelee)
@@ -88,7 +92,7 @@ function AttachWeapon(attachModel,modelHash,boneNumber,x,y,z,xR,yR,zR, isMelee)
 		handle = CreateObject(GetHashKey(attachModel), 1.0, 1.0, 1.0, true, true, false)
 	}
 
-	if isMelee then x = 0.11 y = -0.14 z = 0.0 xR = -75.0 yR = 185.0 zR = 92.0 end -- reposition for melee items
+	if isMelee then x = -0.40 y = -0.15 z = 0.0 xR = -75.0 yR = 185.0 zR = 92.0 end -- reposition for melee items
 	if attachModel == "prop_ld_jerrycan_01" then x = x + 0.3 end
 	AttachEntityToEntity(attached_weapons[attachModel].handle, GetPlayerPed(-1), bone, x, y, z, xR, yR, zR, 1, 1, 0, 0, 2, 1)
 end
@@ -98,7 +102,9 @@ function isMeleeWeapon(wep_name)
         return true
     elseif wep_name == "w_me_bat" then
         return true
-    elseif wep_name == "prop_ld_jerrycan_01" then
+    elseif wep_name == "w_me_poolcue" then
+	   return true
+	elseif wep_name == "prop_ld_jerrycan_01" then
       return true
     else
         return false
